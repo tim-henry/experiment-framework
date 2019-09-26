@@ -185,7 +185,7 @@ def run(train_loader_fn, test_loader_fn, model_fn, args):
 
     train_results, test_results = {}, {}
 
-    keep_pcts = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+    keep_pcts = args['keep_pcts']
     print("keep_pcts: ", keep_pcts)
 
     for keep_pct in keep_pcts:

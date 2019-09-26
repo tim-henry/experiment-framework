@@ -6,13 +6,13 @@ from torchvision import datasets, transforms
 
 
 class LeftOutVariedLocationMNIST(datasets.MNIST):
-    # pct_to_keep: percentage of possible combinations to keep between 0 and 1, rounded down to nearest multiple of 0.1
+    # pct_to_keep: percentage of possible combinations to keep between 0 and 1, rounded down to nearest multiple of 1/9
     def __init__(self, root, train=True, transform=None, target_transform=None, download=False, pct_to_keep=1):
         super().__init__(root, train, transform, target_transform, download)
         pct = pct_to_keep * 9
         self.max_left_dist = int(pct / 2)
         self.max_right_dist = int(pct / 2) if pct % 2 == 0 else int(pct / 2) + 1
-        self.held_out = [(0, 5), (1, 6), (2, 7), (3, 8), (4, 0), (5, 1), (6, 2), (7, 3), (8, 4)]
+        self.held_out = [(0, 4), (1, 5), (2, 6), (3, 7), (4, 8), (5, 0), (6, 1), (7, 2), (8, 3)]
         self.control = [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8)]
         self.combination_space_shape = (9, 9)
         self.class_names = ("shape", "position")
