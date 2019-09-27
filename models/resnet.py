@@ -79,7 +79,7 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.fc2_number = nn.Linear(512*block.expansion, classes)
-        self.fc2_color = nn.Linear(512*block.expansion, 10)
+        self.fc2_color = nn.Linear(512*block.expansion, classes)
 
         if not fine_tune:
             for p in self.conv1.parameters():
