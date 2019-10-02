@@ -188,6 +188,7 @@ def run(train_loader_fn, test_loader_fn, model_fn, args):
     keep_pcts = args['keep_pcts']
     print("keep_pcts: ", keep_pcts)
 
+    state_dicts = {}
     for keep_pct in keep_pcts:
         args['keep_pct'] = keep_pct
         print("Keep pct: ", keep_pct)
@@ -196,7 +197,9 @@ def run(train_loader_fn, test_loader_fn, model_fn, args):
         model = model_fn(num_classes).to(device)
 
         random_indices = np.arange(10)
-        np.random.shuffle(random_indices)
+        if not args["save_model"]:
+            # If saving the model we expect the labels to be in the default order
+            np.random.shuffle(random_indices)
         args['color_indices'] = random_indices
 
         optimizer = optim.SGD(model.parameters(), lr=args['lr'], momentum=args['momentum'])
@@ -211,7 +214,10 @@ def run(train_loader_fn, test_loader_fn, model_fn, args):
         train_results[keep_pct] = keep_pct_train_results
         test_results[keep_pct] = keep_pct_test_results
 
-        if (args['save_model']):
-            torch.save(model.state_dict(), "mnist_cnn.pt")
+        if args["save_model"]:
+            state_dicts[keep_pct] = model.state_dict()
+
+    if args["save_model"]:
+        return {"train_results": train_results, "test_results": test_results, "state_dict": state_dicts}
 
     return {"train_results": train_results, "test_results": test_results}
