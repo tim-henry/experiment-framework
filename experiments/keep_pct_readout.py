@@ -19,7 +19,7 @@ def train(args, model, device, train_loader, optimizer, epoch):
         optimizer.zero_grad()
 
         num_output, col_output = model(data)
-        batch_num_loss, batch_col_loss = F.nll_loss(num_output, num_target), F.nll_loss(col_output, col_target)
+        batch_num_loss, batch_col_loss = args['alpha'] * F.nll_loss(num_output, num_target), (1 - args['alpha']) * F.nll_loss(col_output, col_target)
         num_loss += batch_num_loss.item()
         col_loss += batch_col_loss.item()
         loss = batch_num_loss + batch_col_loss

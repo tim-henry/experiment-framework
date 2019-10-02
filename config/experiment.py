@@ -1,9 +1,10 @@
 import experiments.keep_pct_readout
 
 
-def get_9_class_keep_pct_readout_args():
+def get_9_class_keep_pct_readout_args(alpha=0.5):
     # Training settings
     return {
+        "alpha": alpha,
         "batch_size": 64,
         "test_batch_size": 1000,
         "epochs": 5,
@@ -16,9 +17,10 @@ def get_9_class_keep_pct_readout_args():
     }
 
 
-def get_default_keep_pct_readout_args():
+def get_default_keep_pct_readout_args(alpha=0.5):
     # Training settings
     return {
+        "alpha": alpha,
         "batch_size": 64,
         "test_batch_size": 1000,
         "epochs": 5,
@@ -39,3 +41,16 @@ options = {
         lambda train_loader_fn, test_loader_fn, model:
         experiments.keep_pct_readout.run(train_loader_fn, test_loader_fn, model, get_9_class_keep_pct_readout_args())
 }
+
+for i in range(101):
+    options["keep_pct_readout_default_" + str(i)] = lambda train_loader_fn, test_loader_fn, model: \
+        experiments.keep_pct_readout.run(train_loader_fn,
+                                         test_loader_fn,
+                                         model,
+                                         get_default_keep_pct_readout_args(alpha=(i / 100.)))
+
+    options["keep_pct_readout_9_class_" + str(i)] = lambda train_loader_fn, test_loader_fn, model: \
+        experiments.keep_pct_readout.run(train_loader_fn,
+                                         test_loader_fn,
+                                         model,
+                                         get_9_class_keep_pct_readout_args(alpha=(i / 100.)))
