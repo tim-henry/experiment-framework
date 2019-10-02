@@ -76,4 +76,3 @@ class LeftOutColoredMNIST(datasets.MNIST):
             target = self.target_transform(target)
 
         return transforms.ToTensor()(img), torch.tensor([target.item(), color_class])
-        # return transforms.ToTensor()(img), torch.tensor([target.item(), color_class, size_class, vert_loc_class])
