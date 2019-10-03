@@ -68,7 +68,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10, fine_tune=False, classes=10):
-        print("Fine tune? ", fine_tune)
+        # print("Fine tune? ", fine_tune)
         super(ResNet, self).__init__()
         self.in_planes = 64
 
@@ -119,7 +119,7 @@ class ResNet(nn.Module):
 
 
 def ResNet18(pretrained=False, fine_tune=False, classes=10):
-    print("Pretrained? ", pretrained)
+    # print("Pretrained? ", pretrained)
     model = ResNet(BasicBlock, [2, 2, 2, 2], fine_tune=fine_tune, classes=classes)
 
     if not pretrained:
