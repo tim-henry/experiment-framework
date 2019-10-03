@@ -43,14 +43,15 @@ options = {
 }
 
 for i in range(101):
-    options["keep_pct_readout_default_" + str(i)] = lambda train_loader_fn, test_loader_fn, model: \
+    alpha = i / 100.
+    options["keep_pct_readout_default_" + str(i)] = lambda train_loader_fn, test_loader_fn, model, alpha=alpha: \
         experiments.keep_pct_readout.run(train_loader_fn,
                                          test_loader_fn,
                                          model,
-                                         get_default_keep_pct_readout_args(alpha=(i / 100.)))
+                                         get_default_keep_pct_readout_args(alpha=alpha))
 
-    options["keep_pct_readout_9_class_" + str(i)] = lambda train_loader_fn, test_loader_fn, model: \
+    options["keep_pct_readout_9_class_" + str(i)] = lambda train_loader_fn, test_loader_fn, model, alpha=alpha: \
         experiments.keep_pct_readout.run(train_loader_fn,
                                          test_loader_fn,
                                          model,
-                                         get_9_class_keep_pct_readout_args(alpha=(i / 100.)))
+                                         get_9_class_keep_pct_readout_args(alpha=alpha))

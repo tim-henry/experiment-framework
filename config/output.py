@@ -1,4 +1,5 @@
 import json
+import os
 import torch
 
 
@@ -13,9 +14,12 @@ def keep_pct_readout_dump(timestamp, output_values, dataset=None, modelname=None
         json.dump(output_values["test_results"], fp)
 
     if "state_dict" in output_values:
+        directory = "analysis/state_dicts/" + dataset + "/" + modelname + "/"
+        if not os.path.isdir(directory):
+            os.makedirs(directory, exist_ok=True)
         for keep_pct in output_values["state_dict"].keys():
             torch.save(output_values["state_dict"][keep_pct],
-                       "analysis/state_dicts/" + dataset + "/" + modelname + "/" + str(keep_pct) + ".pt")
+                       directory + str(keep_pct) + ".pt")
 
 
 options = {"keep_pct_readout_dump": keep_pct_readout_dump}

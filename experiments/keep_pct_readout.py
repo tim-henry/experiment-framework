@@ -187,6 +187,7 @@ def run(train_loader_fn, test_loader_fn, model_fn, args):
 
     keep_pcts = args['keep_pcts']
     print("keep_pcts: ", keep_pcts)
+    print("alpha: ", args["alpha"])
 
     state_dicts = {}
     for keep_pct in keep_pcts:
