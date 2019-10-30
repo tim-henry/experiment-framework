@@ -16,7 +16,7 @@ def main():
     parser.add_argument('--experiment', type=str, required=True, help='the name of the desired experiment config')
     args = parser.parse_args()
     print("Args:\nExperiment: {}\nOutput: {}\nInput: {}\nModel: {}".format(
-          args.experiment, args.output, args.input, args.model))
+        args.experiment, args.output, args.input, args.model))
 
     # Get input loader functions
     train_loader_fn, test_loader_fn = config.input.options[args.input]
@@ -37,14 +37,19 @@ def main():
     output_fn(timestamp, output_values, args.input, args.model)
 
     # Make a respective entry in the results lookup table
-    conn = sqlite3.connect('results/results_lookup.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS  experiments
-                 (timestamp text, input text, output text, model text, experiment text)''')
-    c.execute("INSERT INTO experiments VALUES (?,?,?,?,?)",
-              (timestamp, args.input, args.output, args.model, args.experiment))
-    conn.commit()
-    conn.close()
+    while True:  # Try to obtain lock
+        try:
+            conn = sqlite3.connect('results/results_lookup.db')
+            c = conn.cursor()
+            c.execute('''CREATE TABLE IF NOT EXISTS  experiments
+                         (timestamp text, input text, output text, model text, experiment text)''')
+            c.execute("INSERT INTO experiments VALUES (?,?,?,?,?)",
+                      (timestamp, args.input, args.output, args.model, args.experiment))
+            conn.commit()
+            conn.close()
+        except:
+            continue
+        break
 
 
 if __name__ == '__main__':
