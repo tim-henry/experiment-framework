@@ -9,8 +9,12 @@ class MultiTaskResNet(resnet.ResNet):
     def __init__(self, fine_tune, classes, pool):
         super(MultiTaskResNet, self).__init__(resnet.BasicBlock, [2, 2, 2, 2])
         self.pool = pool
-        self.fc2_number = nn.Linear(512 * resnet.BasicBlock.expansion, classes)
-        self.fc2_color = nn.Linear(512 * resnet.BasicBlock.expansion, classes)
+        if pool:
+            self.fc2_number = nn.Linear(512 * resnet.BasicBlock.expansion, classes)
+            self.fc2_color = nn.Linear(512 * resnet.BasicBlock.expansion, classes)
+        else:
+            self.fc2_number = nn.Linear(2048 * resnet.BasicBlock.expansion, classes)
+            self.fc2_color = nn.Linear(2048 * resnet.BasicBlock.expansion, classes)
 
         if not fine_tune:
             for p in self.conv1.parameters():
