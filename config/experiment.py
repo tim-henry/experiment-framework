@@ -1,5 +1,7 @@
 import experiments.keep_pct_readout
 import experiments.train
+import experiments.run
+import experiments.keep_pct_readout_eval
 
 
 def get_9_class_keep_pct_readout_args(alpha=0.5):
@@ -25,8 +27,25 @@ def get_default_keep_pct_readout_args(alpha=0.5):
         "batch_size": 64,
         "test_batch_size": 1000,
         "epochs": 5,
-        "lr": 0.003,
+        "lr": 0.01,
         "momentum": 0.5,
+        "no_cuda": False,
+        "log_interval": 100,
+        "save_model": False,
+        "keep_pcts": [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+    }
+
+
+def get_train_args(alpha=0.5):
+    # Training settings
+    return {
+        "alpha": alpha,
+        "batch_size": 64,
+        "test_batch_size": 1000,
+        "epochs": 5,
+        "lr": 0.001,
+        "weight_decay": 5e-4,
+        "momentum": 0.9,
         "no_cuda": False,
         "log_interval": 100,
         "save_model": False,
@@ -63,7 +82,17 @@ options = {
                                          get_9_class_keep_pct_readout_save_args()),
     "train":
         lambda train_loader_fn, test_loader_fn, model:
-        experiments.train.run(train_loader_fn, test_loader_fn, model, get_default_keep_pct_readout_save_args())
+        experiments.train.run(train_loader_fn, test_loader_fn, model, get_train_args()),
+    "run":
+        lambda train_loader_fn, test_loader_fn, model:
+        experiments.run.run(None, None, model, None),
+    "keep_pct_readout_eval":
+        lambda train_loader_fn, test_loader_fn, model:
+        experiments.keep_pct_readout_eval.run(train_loader_fn, test_loader_fn, model, get_default_keep_pct_readout_args()),
+    "keep_pct_readout_eval_loc":
+        lambda train_loader_fn, test_loader_fn, model:
+        experiments.keep_pct_readout_eval.run(train_loader_fn, test_loader_fn, model,
+                                              get_9_class_keep_pct_readout_args())
 
 }
 
