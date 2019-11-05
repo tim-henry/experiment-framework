@@ -16,6 +16,7 @@ class LeftOutVariedLocationMNIST(datasets.MNIST):
         self.control = [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8)]
         self.combination_space_shape = (9, 9)
         self.class_names = ("shape", "position")
+        self.name = "left_out_varied_location_mnist"
 
     def __getitem__(self, index):
         """

@@ -10,6 +10,7 @@ class SimpleCNN(nn.Module):
         self.fc1 = nn.Linear(5 * 5 * 50, 500)
         self.fc2_number = nn.Linear(500, num_classes)
         self.fc2_color = nn.Linear(500, num_classes)
+        self.name = "simple_cnn"
 
     def forward(self, x):
         x = F.relu(self.conv1(x))

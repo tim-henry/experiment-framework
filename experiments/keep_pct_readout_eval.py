@@ -3,8 +3,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-
-import experiments.get_weight
+from collections import OrderedDict
 
 
 def train(args, model, device, train_loader, optimizer, epoch):
@@ -189,36 +188,41 @@ def run(train_loader_fn, test_loader_fn, model_fn, args):
 
     keep_pcts = args['keep_pcts']
     print("keep_pcts: ", keep_pcts)
-    print("weighted loss: ", args["weighted"])
+    print("alpha: ", args["alpha"])
 
     state_dicts = {}
+    model_name = "resnet"
     for keep_pct in keep_pcts:
         args['keep_pct'] = keep_pct
         print("Keep pct: ", keep_pct)
 
+        random_indices = np.arange(10)
+        args['color_indices'] = random_indices
+
+        # train_loader = train_loader_fn(args)
+        test_loader = test_loader_fn(args)
+
         device = torch.device("cuda" if args['use_cuda'] else "cpu")
         model = model_fn(num_classes).to(device)
 
-        random_indices = np.arange(10)
-        if not args["save_model"]:
-            # If saving the model we expect the labels to be in the default order
-            np.random.shuffle(random_indices)
-        args['color_indices'] = random_indices
+        # original saved file with DataParallel
+        state_dict_directory = "analysis/state_dicts/" + test_loader.dataset.dataset_name + "/" + train_loader_fn(args) + "/"
+        state_dict = torch.load(state_dict_directory + str(keep_pct) + ".pt", map_location=torch.device('cpu'))
+        model.load_state_dict(state_dict)
+        model.eval()
+
+        # if not args["save_model"]:
+        #     # If saving the model we expect the labels to be in the default order
+        #     np.random.shuffle(random_indices)
 
         optimizer = optim.SGD(model.parameters(), lr=args['lr'], momentum=args['momentum'])
 
         keep_pct_train_results, keep_pct_test_results = [], []
-        train_loader = train_loader_fn(args)
-        test_loader = test_loader_fn(args)
-
-        if args['weighted']:
-            args['alpha'] = experiments.get_weight.get_alpha(model.name, train_loader.dataset.name)
-            print(args['alpha'])
 
         for epoch in range(1, args['epochs'] + 1):
-            keep_pct_train_results.append(train(args, model, device, train_loader, optimizer, epoch))
+            # keep_pct_train_results.append(train(args, model, device, train_loader, optimizer, epoch))
             keep_pct_test_results.append(
-                test(args, model, device, test_loader, train_loader.dataset.held_out, train_loader.dataset.control))
+                test(args, model, device, test_loader, test_loader.dataset.held_out, test_loader.dataset.control))
         train_results[keep_pct] = keep_pct_train_results
         test_results[keep_pct] = keep_pct_test_results
 

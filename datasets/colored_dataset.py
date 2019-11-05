@@ -28,6 +28,7 @@ class LeftOutColoredMNIST(datasets.MNIST):
         self.color_indices = color_indices
         self.combination_space_shape = (10, 10)
         self.class_names = ("shape", "color")
+        self.name = "left_out_colored_mnist"
 
     def __getitem__(self, index):
         """
