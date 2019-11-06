@@ -67,10 +67,11 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10, fine_tune=False, classes=10):
+    def __init__(self, block, num_blocks, num_classes=10, fine_tune=False, classes=10, pool=True, pretrained=False):
         # print("Fine tune? ", fine_tune)
         super(ResNet, self).__init__()
         self.in_planes = 64
+        self.pool = pool
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
@@ -78,8 +79,20 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+        self.pool_fc = nn.Linear(8192, 512*block.expansion)
         self.fc2_number = nn.Linear(512*block.expansion, classes)
         self.fc2_color = nn.Linear(512*block.expansion, classes)
+
+        if pool:
+            if not pretrained:
+                self.name = "resnet"
+            else:
+                if fine_tune:
+                    self.name = "resnet_pretrained"
+                else:
+                    self.name = "resnet_pretrained_embeddings"
+        else:
+            self.name = "resnet_no_pool"
 
         if not fine_tune:
             for p in self.conv1.parameters():
@@ -109,7 +122,11 @@ class ResNet(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
+        if self.pool:
+            out = F.avg_pool2d(out, 4)
+        else:
+            out = out.view(out.size(0), -1)
+            out = self.pool_fc(out)
         out = out.view(out.size(0), -1)
         # out = self.linear(out)
         num = self.fc2_number(out)
@@ -118,9 +135,9 @@ class ResNet(nn.Module):
         # return out
 
 
-def ResNet18(pretrained=False, fine_tune=False, classes=10):
+def ResNet18(pretrained=False, fine_tune=False, classes=10, pool=True):
     # print("Pretrained? ", pretrained)
-    model = ResNet(BasicBlock, [2, 2, 2, 2], fine_tune=fine_tune, classes=classes)
+    model = ResNet(BasicBlock, [2, 2, 2, 2], fine_tune=fine_tune, classes=classes, pool=pool, pretrained=pretrained)
 
     if not pretrained:
         return model
