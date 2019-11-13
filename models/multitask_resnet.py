@@ -9,12 +9,18 @@ class MultiTaskResNet(resnet.ResNet):
     def __init__(self, fine_tune, classes, pool):
         super(MultiTaskResNet, self).__init__(resnet.BasicBlock, [2, 2, 2, 2])
         self.pool = pool
+        self.classes = classes
         if pool:
-            self.fc2_number = nn.Linear(512 * resnet.BasicBlock.expansion, classes)
-            self.fc2_color = nn.Linear(512 * resnet.BasicBlock.expansion, classes)
+            self.fc2_number = nn.Linear(512 * resnet.BasicBlock.expansion, classes[0])
+            self.fc2_color = nn.Linear(512 * resnet.BasicBlock.expansion, classes[1])
         else:
-            self.fc2_number = nn.Linear(2048 * resnet.BasicBlock.expansion, classes)
-            self.fc2_color = nn.Linear(2048 * resnet.BasicBlock.expansion, classes)
+            self.fc2_number = nn.Linear(2048 * resnet.BasicBlock.expansion, classes[0])
+            self.fc2_color = nn.Linear(2048 * resnet.BasicBlock.expansion, classes[1])
+        if len(classes) == 3:
+            if pool:
+                self.fc2_loc = nn.Linear(512 * resnet.BasicBlock.expansion, classes[2])
+            else:
+                self.fc2_loc = nn.Linear(2048 * resnet.BasicBlock.expansion, classes[2])
 
         if not fine_tune:
             for p in self.conv1.parameters():
@@ -48,10 +54,15 @@ class MultiTaskResNet(resnet.ResNet):
 
         num = self.fc2_number(x)
         col = self.fc2_color(x)
-        return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1)
+
+        if len(self.classes) == 2:
+            return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1)
+        else:
+            loc = self.fc2_loc(x)
+            return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1), F.log_softmax(loc, dim=1)
 
 
-def ResNet18(pretrained=False, fine_tune=False, classes=10, pool=True):
+def ResNet18(pretrained=False, fine_tune=False, classes=(10, 10), pool=True):
     model = MultiTaskResNet(fine_tune, classes, pool)
 
     if pretrained:

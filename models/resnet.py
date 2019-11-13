@@ -67,12 +67,13 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10, fine_tune=False, classes=10, pool=True, pretrained=False):
+    def __init__(self, block, num_blocks, fine_tune=False, classes=(10, 10), pool=True, pretrained=False, size_factor=1):
+        print(size_factor)
         # print("Fine tune? ", fine_tune)
         super(ResNet, self).__init__()
         self.in_planes = 64
         self.pool = pool
-
+        self.classes = classes
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
@@ -80,8 +81,10 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.pool_fc = nn.Linear(8192, 512*block.expansion)
-        self.fc2_number = nn.Linear(512*block.expansion, classes)
-        self.fc2_color = nn.Linear(512*block.expansion, classes)
+        self.fc2_number = nn.Linear(512*block.expansion, classes[0])
+        self.fc2_color = nn.Linear(512*block.expansion, classes[1])
+        if len(classes) == 3:
+            self.fc2_loc = nn.Linear(512*block.expansion, classes[2])
 
         if pool:
             if not pretrained:
@@ -123,19 +126,23 @@ class ResNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         if self.pool:
-            out = F.avg_pool2d(out, 4)
+            out = F.avg_pool2d(out, 28)
         else:
             out = out.view(out.size(0), -1)
             out = self.pool_fc(out)
+            out = F.relu(out)
         out = out.view(out.size(0), -1)
         # out = self.linear(out)
         num = self.fc2_number(out)
         col = self.fc2_color(out)
-        return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1)
-        # return out
+        if len(self.classes) == 3:
+            loc = self.fc2_loc(out)
+            return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1), F.log_softmax(loc, dim=1)
+        else:
+            return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1)
 
 
-def ResNet18(pretrained=False, fine_tune=False, classes=10, pool=True):
+def ResNet18(pretrained=False, fine_tune=False, classes=(10, 10), pool=True):
     # print("Pretrained? ", pretrained)
     model = ResNet(BasicBlock, [2, 2, 2, 2], fine_tune=fine_tune, classes=classes, pool=pool, pretrained=pretrained)
 
@@ -163,5 +170,5 @@ def ResNet18(pretrained=False, fine_tune=False, classes=10, pool=True):
 
 def test():
     net = ResNet18()
-    y = net(torch.randn(1,3,32,32))
+    y = net(torch.randn(1, 3, 32, 32))
     print(y.size())
