@@ -30,6 +30,7 @@ class LeftOutVariedLocationMNIST(datasets.MNIST):
             img, target = self.train_data[index], self.train_labels[index]
         else:
             img, target = self.test_data[index], self.test_labels[index]
+        assert target.item() < 9
 
         # Put grayscale image in RGB space
         img_array = np.stack((img.numpy(),) * 3, axis=-1)
