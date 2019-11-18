@@ -126,7 +126,7 @@ class ResNet(nn.Module):
         out = self.layer3(out)
         out = self.layer4(out)
         if self.pool:
-            out = F.avg_pool2d(out, 28)
+            out = F.avg_pool2d(out, 4)
         else:
             out = out.view(out.size(0), -1)
             out = self.pool_fc(out)
