@@ -127,6 +127,7 @@ class ResNet(nn.Module):
         else:
             out = out.view(out.size(0), -1)
             out = self.pool_fc(out)
+        out = F.relu(out)
         out = out.view(out.size(0), -1)
         # out = self.linear(out)
         num = self.fc2_number(out)
