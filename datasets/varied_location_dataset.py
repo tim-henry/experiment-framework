@@ -14,6 +14,10 @@ class LeftOutVariedLocationMNIST(datasets.MNIST):
         self.max_right_dist = int(pct / 2) if pct % 2 == 0 else int(pct / 2) + 1
         self.held_out = [(0, 4), (1, 5), (2, 6), (3, 7), (4, 8), (5, 0), (6, 1), (7, 2), (8, 3)]
         self.control = [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8)]
+        self.held_out_val = self.held_out[:2]
+        self.held_out_test = self.held_out[2:]
+        self.control_val = self.control[:2]
+        self.control_test = self.control[2:]
         self.combination_space_shape = (9, 9)
         self.class_names = ("shape", "position")
         self.name = "left_out_varied_location_mnist"
@@ -55,6 +59,7 @@ class LeftOutVariedLocationMNIST(datasets.MNIST):
         horiz_offset = horiz_loc_class * size
 
         img_array[vert_offset:(vert_offset + size), horiz_offset:(horiz_offset + size), :] = np.array(img)
+        img_array = np.clip(img_array, 0, 255g)
         img_array = img_array.astype(dtype=np.uint8)
 
         # 28x28 to 32x32

@@ -24,7 +24,11 @@ class LeftOutColoredMNIST(datasets.MNIST):
         self.max_left_dist = int(pct / 2)
         self.max_right_dist = int(pct / 2) if pct % 2 == 0 else int(pct / 2) + 1
         self.held_out = [(0, 5), (1, 6), (2, 7), (3, 8), (4, 9), (5, 0), (6, 1), (7, 2), (8, 3), (9, 4)]
+        self.held_out_val = self.held_out[:2]
+        self.held_out_test = self.held_out[2:]
         self.control = [(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)]
+        self.control_val = self.control[:2]
+        self.control_test = self.control[2:]
         self.color_indices = color_indices
         self.combination_space_shape = (10, 10)
         self.class_names = ("shape", "color")
