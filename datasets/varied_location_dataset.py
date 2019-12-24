@@ -59,7 +59,7 @@ class LeftOutVariedLocationMNIST(datasets.MNIST):
         horiz_offset = horiz_loc_class * size
 
         img_array[vert_offset:(vert_offset + size), horiz_offset:(horiz_offset + size), :] = np.array(img)
-        img_array = np.clip(img_array, 0, 255g)
+        img_array = np.clip(img_array, 0, 255)
         img_array = img_array.astype(dtype=np.uint8)
 
         # 28x28 to 32x32
