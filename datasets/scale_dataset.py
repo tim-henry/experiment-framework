@@ -46,7 +46,7 @@ class LeftOutScaleMNIST(datasets.MNIST):
         lower_bound = number_class - self.max_left_dist
         upper_bound = number_class + self.max_right_dist
         scale_class = random.randrange(lower_bound, upper_bound) % 3
-        size = [28, 18, 9][scale_class]
+        size = [28, 18, 8][scale_class]
 
         img = Image.fromarray(img_array)
         img.thumbnail((size, size))
