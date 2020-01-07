@@ -19,7 +19,7 @@ def get_3_class_keep_pct_readout_args(weighted=False, alpha=0.5):
         "momentum": 0.5,
         "no_cuda": False,
         "log_interval": 100,
-        "save_model": False,
+        "save_model": True,
         "keep_pcts": list(range(1, 4)),
         'example_pct': 1,
     }
@@ -41,6 +41,7 @@ def get_9_class_keep_pct_readout_args(weighted=False, alpha=None):
         "save_model": False,
         "keep_pcts": list(range(1, 10)),
         'example_pct': 1,
+        "save_model": True
     }
 
 
@@ -60,6 +61,7 @@ def get_3_task_keep_pct_readout_args(weighted=False, alpha=None):
         "save_model": False,
         "keep_pcts": list(range(1, 10)),
         'example_pct': 1,
+        "save_model": True
     }
 
 
@@ -79,6 +81,7 @@ def get_default_keep_pct_readout_args(weighted=False, alpha=None):
         "save_model": False,
         "keep_pcts": list(range(1, 11)),
         'example_pct': 1,
+        "save_model": True
     }
 
 
@@ -97,6 +100,7 @@ def get_train_args(alpha=None):
         "save_model": False,
         "keep_pcts": list(float(x) for x in range(1, 11)),
         'example_pct': 1,
+        "save_model": True
     }
 
 
@@ -177,7 +181,7 @@ options = {
                                          get_default_keep_pct_readout_save_args()),
     "keep_pct_readout_9_class_save":
         lambda train_loader_fn, test_loader_fn, model:
-        experiments.keep_pct_readout.run(train_loader_fn, test_loader_fn, model,
+        experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
                                          get_9_class_keep_pct_readout_save_args()),
     "train":
         lambda train_loader_fn, test_loader_fn, model:
@@ -199,7 +203,7 @@ options = {
                                          get_default_keep_pct_readout_args(weighted=True)),
     "keep_pct_readout_9_class_weighted":
         lambda train_loader_fn, test_loader_fn, model:
-        experiments.keep_pct_readout.run(train_loader_fn, test_loader_fn, model,
+        experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
                                          get_9_class_keep_pct_readout_args(weighted=True)),
     "keep_pct_readout_default_weighted_save":
         lambda train_loader_fn, test_loader_fn, model:

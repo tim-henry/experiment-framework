@@ -34,7 +34,7 @@ def main():
     timestamp = datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S_%f')
     output_values = experiment(train_loader_fn, test_loader_fn, model_fn)
     mkdir("results/" + timestamp)
-    output_fn(timestamp, output_values, args.input, args.model)
+    output_fn(timestamp, output_values, args.input, args.model, args.experiment)
 
     # Make a respective entry in the results lookup table
     while True:  # Try to obtain lock
