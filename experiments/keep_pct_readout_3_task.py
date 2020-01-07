@@ -184,7 +184,8 @@ def test(args, model, device, test_loader, held_out, control):
     non_left_out_acc = None
     if non_left_out_count > 0:
         print('non_left-Out Accuracy: {}/{} ({:.0f}%)\n'
-              '(non_left-Out {} Accuracy: {}/{} ({:.0f}%), non_left-Out {} Accuracy: {}/{} ({:.0f}%))\n'.format(
+              '(non_left-Out {} Accuracy: {}/{} ({:.0f}%), non_left-Out {} Accuracy: {}/{} ({:.0f}%),'
+              'non_Left-Out {} Accuracy: {}/{} ({:.0f}%))\n'.format(
             non_left_out_correct_count, non_left_out_count, 100. * non_left_out_correct_count / non_left_out_count,
             label_1_name, non_left_out_num_correct_count, non_left_out_count,
                                                             100. * non_left_out_num_correct_count / non_left_out_count,
