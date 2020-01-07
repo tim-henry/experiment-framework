@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+import os
 
 import experiments.get_weight
 
@@ -18,6 +19,7 @@ def train(args, model, device, train_loader, optimizer, epoch):
     correct_count = 0
 
     for batch_idx, (data, target) in enumerate(train_loader):
+        # print("Batch idx:", batch_idx)
         data, target = data.to(device), target.to(device)
         num_target, col_target = target[:, 0], target[:, 1]
         optimizer.zero_grad()
@@ -78,12 +80,10 @@ def test(args, model, device, test_loader, held_out, control):
     non_left_out_col_correct_count = 0
     non_left_out_correct_count = 0
     non_left_out_count = 0
-    #
-    # nines_correct = 0
-    # nines_count = 0
 
     with torch.no_grad():
         for data, target in test_loader:
+
             data, target = data.to(device), target.to(device)
             num_target, col_target = target[:, 0], target[:, 1]
 
@@ -108,11 +108,6 @@ def test(args, model, device, test_loader, held_out, control):
                 mask = np.logical_or(mask, diff_array.sum(axis=1) == 0)
 
             mask = torch.Tensor(mask.astype("uint8")).byte().to(device)
-
-            # nine_mask = target.cpu().numpy()[:, 0] == 9
-            # nine_mask = torch.Tensor(nine_mask.astype("uint8")).byte().to(device)
-            # nines_count += nine_mask.sum().item()
-            # nines_correct += (num_correct * nine_mask).sum().item()
 
             left_out_num_correct = num_correct * mask
             left_out_col_correct = col_correct * mask
@@ -211,6 +206,8 @@ def run(train_loader_fn, test_loader_fn, model_fn, args):
         model = model_fn(num_classes).to(device)
 
         random_indices = np.arange(10)
+        np.random.seed(17)
+        np.random.shuffle(random_indices)
         # if not args["save_model"]:
         #     # If saving the model we expect the labels to be in the default order
         #     np.random.shuffle(random_indices)
@@ -222,7 +219,8 @@ def run(train_loader_fn, test_loader_fn, model_fn, args):
         train_loader = train_loader_fn(args)
         test_loader = test_loader_fn(args)
 
-        if args['weighted']:
+        if args['weighted'] and args['alpha'] is None:
+            print("Is weighted: ", args['weighted'])
             weight = experiments.get_weight.get_alpha(model.name, train_loader.dataset.name)
             if isinstance(weight, collections.Mapping):
                 print("Weight for ", keep_pct, ": ", weight[str(keep_pct)])
@@ -232,6 +230,9 @@ def run(train_loader_fn, test_loader_fn, model_fn, args):
             else:
                 print("Fixed weight:", weight)
                 args['alpha'] = weight
+        else:
+            args['alpha'] = 0.5
+        print("Alpha: ", args['alpha'])
 
         for epoch in range(1, args['epochs'] + 1):
             keep_pct_train_results.append(train(args, model, device, train_loader, optimizer, epoch))
