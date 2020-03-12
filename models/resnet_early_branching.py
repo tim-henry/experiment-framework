@@ -67,10 +67,15 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, fine_tune=False, classes=(10, 10), pool=True, pretrained=False, size_factor=1):
+    def __init__(self, block, num_blocks, fine_tune=False, classes=(10, 10), pool=True, pretrained=False, size_factor=1, branching=True):
         print(size_factor)
         # print("Fine tune? ", fine_tune)
         super(ResNet, self).__init__()
+        if branching:
+            num_branches = len(classes)
+        else:
+            num_branches = 1
+        self.num_branches = num_branches
         self.in_planes = 64
         self.pool = pool
         self.classes = classes
@@ -78,13 +83,30 @@ class ResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(64)
         self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.pool_fc = nn.Linear(8192, 512*block.expansion)
+        self.layer3_1 = self._make_layer(block, 256, num_blocks[2], stride=2)
+        self.layer4_1 = self._make_layer(block, 512, num_blocks[3], stride=2)
+        self.pool_fc_1 = nn.Linear(8192, 512*block.expansion)
+
+
+        if self.num_branches > 1:
+            self.layer3_2 = self._make_layer(block, 256, num_blocks[2], stride=2)
+            self.layer4_2 = self._make_layer(block, 512, num_blocks[3], stride=2)
+            self.pool_fc_2 = nn.Linear(8192, 512*block.expansion)
+        if self.num_branches > 2:
+            self.layer3_3 = self._make_layer(block, 256, num_blocks[2], stride=2)
+            self.layer4_3 = self._make_layer(block, 512, num_blocks[3], stride=2)
+            self.pool_fc_3 = nn.Linear(8192, 512*block.expansion)
+        if self.num_branches == 4:
+            self.layer3_4 = self._make_layer(block, 256, num_blocks[2], stride=2)
+            self.layer4_4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+            self.pool_fc_4 = nn.Linear(8192, 512*block.expansion)
+
         self.fc2_number = nn.Linear(512*block.expansion, classes[0])
         self.fc2_color = nn.Linear(512*block.expansion, classes[1])
-        if len(classes) == 3:
+        if len(classes) > 2:
             self.fc2_loc = nn.Linear(512*block.expansion, classes[2])
+        if len(classes) == 4:
+            self.fc2_scale = nn.Linear(512*block.expansion, classes[3])
 
         if pool:
             if not pretrained:
@@ -106,14 +128,33 @@ class ResNet(nn.Module):
                 p.requires_grad = False
             for p in self.layer2.parameters():
                 p.requires_grad = False
-            for p in self.layer3.parameters():
+            for p in self.layer3_1.parameters():
                 p.requires_grad = False
-            for p in self.layer4.parameters():
+            for p in self.layer4_1.parameters():
                 p.requires_grad = False
+            if self.num_branches > 1:
+                for p in self.layer3_2.parameters():
+                    p.requires_grad = False
+                for p in self.layer4_2.parameters():
+                    p.requires_grad = False
+            if self.num_branches > 2:
+                for p in self.layer3_3.parameters():
+                    p.requires_grad = False
+                for p in self.layer4_3.parameters():
+                    p.requires_grad = False
+            if self.num_branches == 4:
+                for p in self.layer3_4.parameters():
+                    p.requires_grad = False
+                for p in self.layer4_4.parameters():
+                    p.requires_grad = False
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
+        if planes == 64:
+            self.in_planes = 64
+        else:
+            self.in_planes = planes//2
         for stride in strides:
             layers.append(block(self.in_planes, planes, stride))
             self.in_planes = planes * block.expansion
@@ -123,28 +164,77 @@ class ResNet(nn.Module):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
+        out1 = self.layer3_1(out)
+        out1 = self.layer4_1(out1)
         if self.pool:
-            out = F.avg_pool2d(out, 4)
+            out1 = F.avg_pool2d(out1, 4)
         else:
-            out = out.view(out.size(0), -1)
-            out = self.pool_fc(out)
-            out = F.relu(out)
-        out = out.view(out.size(0), -1)
-        # out = self.linear(out)
-        num = self.fc2_number(out)
-        col = self.fc2_color(out)
+            out1 = out1.view(out1.size(0), -1)
+            out1 = self.pool_fc_1(out1)
+            out1 = F.relu(out1)
+        out1 = out1.view(out1.size(0), -1)
+
+        if self.num_branches == 1:
+            num = self.fc2_number(out1)
+            col = self.fc2_color(out1)
+            if len(self.classes) == 3:
+                loc = self.fc2_loc(out1)
+                return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1), F.log_softmax(loc, dim=1)
+            elif len(self.classes) == 4:
+                loc = self.fc2_loc(out1)
+                scale = self.fc2_scale(out1)
+                return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1), F.log_softmax(loc, dim=1), F.log_softmax(scale, dim=1)
+            else:
+                return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1)
+
+        if self.num_branches > 1:
+            out2 = self.layer3_2(out)
+            out2 = self.layer4_2(out2)
+            if self.pool:
+                out2 = F.avg_pool2d(out2,4)
+            else:
+                out2 = out2.view(out2.size(0),-1)
+                out2 = self.pool_fc_2(out2)
+                out2 = F.relu(out2)
+            out2 = out2.view(out2.size(0), -1)
+            num = self.fc2_number(out1)
+            col = self.fc2_color(out2)
+
+        if self.num_branches > 2:
+            out3 = self.layer3_3(out)
+            out3 = self.layer4_3(out3)
+            if self.pool:
+                out3 = F.avg_pool2d(out3)
+            else:
+                out3 = out3.view(out3.size(0), -1)
+                out3 = self.pool_fc_3(out3)
+                out3 = F.relu(out3)
+            out3 = out3.view(out3.size(0), -1)
+            loc = self.fc2_loc(out3)
+
+        if self.num_branches == 4:
+            out4 = self.layer3_4(out)
+            out4 = self.layer4_4(out4)
+            if self.pool:
+                out4 = F.avg_pool2d(out4)
+            else:
+                out4 = out4.view(out4.size(0),-1)
+                out4 = self.pool_fc_4(out4)
+                out4 = F.relu(out4)
+            out4 = out4.view(out4.size(0), -1)
+            scale = self.fc2_scale(out4)
+
         if len(self.classes) == 3:
-            loc = self.fc2_loc(out)
             return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1), F.log_softmax(loc, dim=1)
+        elif len(self.classes) == 4:
+            return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1), F.log_softmax(loc, dim=1), F.log_softmax(scale, dim=1)
         else:
             return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1)
 
 
-def ResNet18(pretrained=False, fine_tune=False, classes=(10, 10), pool=True):
+def ResNet18(pretrained=False, fine_tune=False, classes=(10, 10), pool=True, branching=True):
     # print("Pretrained? ", pretrained)
-    model = ResNet(BasicBlock, [2, 2, 2, 2], fine_tune=fine_tune, classes=classes, pool=pool, pretrained=pretrained)
+    model = ResNet(BasicBlock, [2, 2, 2, 2], fine_tune=fine_tune, classes=classes, pool=pool, pretrained=pretrained, branching=branching)
 
     if not pretrained:
         return model
