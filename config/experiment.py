@@ -3,19 +3,21 @@ import experiments.train
 import experiments.run
 import experiments.keep_pct_readout_eval
 import experiments.keep_pct_readout_3_task
+import experiments.keep_pct_readout_4_task
 import experiments.keep_pct_readout_v2
 
 
-def get_3_class_keep_pct_readout_args(weighted=False, alpha=0.5):
+def get_3_class_keep_pct_readout_args(weighted=False, alpha=0.5, val=False, lr=0.003):
     # Training settings
     return {
+        "val": val,
         "alpha": alpha,
         "weighted": weighted,
         "num_classes": (9, 3),
         "batch_size": 32,
         "test_batch_size": 512,
         "epochs": 5,
-        "lr": 0.003,
+        "lr": lr,
         "momentum": 0.5,
         "no_cuda": False,
         "log_interval": 100,
@@ -25,16 +27,17 @@ def get_3_class_keep_pct_readout_args(weighted=False, alpha=0.5):
     }
 
 
-def get_9_class_keep_pct_readout_args(weighted=False, alpha=None):
+def get_9_class_keep_pct_readout_args(weighted=False, alpha=None, val=False, lr=0.003):
     # Training settings
     return {
+        "val": val,
         "alpha": alpha,
         "weighted": weighted,
         "num_classes": (9, 9),
         "batch_size": 32,
         "test_batch_size": 512,
         "epochs": 5,
-        "lr": 0.003,
+        "lr": lr,
         "momentum": 0.5,
         "no_cuda": False,
         "log_interval": 100,
@@ -45,16 +48,17 @@ def get_9_class_keep_pct_readout_args(weighted=False, alpha=None):
     }
 
 
-def get_3_task_keep_pct_readout_args(weighted=False, alpha=None):
+def get_3_task_keep_pct_readout_args(weighted=False, alpha=None, val=False, lr=0.003):
     # Training settings
     return {
+        "val": val,
         "alpha": alpha,
         "weighted": weighted,
         "num_classes": (9, 9, 9),
-        "batch_size": 64,
-        "test_batch_size": 1000,
+        "batch_size": 32,
+        "test_batch_size": 32,
         "epochs": 5,
-        "lr": 0.003,
+        "lr": lr,
         "momentum": 0.5,
         "no_cuda": False,
         "log_interval": 100,
@@ -65,16 +69,38 @@ def get_3_task_keep_pct_readout_args(weighted=False, alpha=None):
     }
 
 
-def get_default_keep_pct_readout_args(weighted=False, alpha=None):
+def get_4_task_keep_pct_readout_args(weighted=False, alpha=None, val=False, lr=0.003):
     # Training settings
     return {
+        "val": val,
+        "alpha": alpha,
+        "weighted": weighted,
+        "num_classes": (9, 9, 9, 9),
+        "batch_size": 32,
+        "test_batch_size": 32,
+        "epochs": 5,
+        "lr": lr,
+        "momentum": 0.5,
+        "no_cuda": False,
+        "log_interval": 100,
+        "save_model": False,
+        "keep_pcts": list(range(1, 10)),
+        'example_pct': 1,
+        "save_model": True
+    }
+
+
+def get_default_keep_pct_readout_args(weighted=False, alpha=None, val=False, lr=0.003):
+    # Training settings
+    return {
+        "val": val,
         "alpha": alpha,
         "weighted": weighted,
         "batch_size": 32,
         "num_classes": (10, 10),
         "test_batch_size": 512,
         "epochs": 5,
-        "lr": 0.01,
+        "lr": lr,
         "momentum": 0.5,
         "no_cuda": False,
         "log_interval": 100,
@@ -175,6 +201,10 @@ options = {
         lambda train_loader_fn, test_loader_fn, model:
         experiments.keep_pct_readout_3_task.run(train_loader_fn, test_loader_fn, model,
                                          get_3_task_keep_pct_readout_args()),
+    "keep_pct_readout_4_task":
+        lambda train_loader_fn, test_loader_fn, model:
+        experiments.keep_pct_readout_4_task.run(train_loader_fn, test_loader_fn, model,
+                                                get_4_task_keep_pct_readout_args()),
     "keep_pct_readout_default_save":
         lambda train_loader_fn, test_loader_fn, model:
         experiments.keep_pct_readout.run(train_loader_fn, test_loader_fn, model,
@@ -255,22 +285,26 @@ options = {
         lambda train_loader_fn, test_loader_fn, model:
         experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
                                             get_3_class_half_readout_save_args(weighted=False)), #todo get weights set true
-    "keep_pct_readout_shape_only":
+    "keep_pct_readout_shape_only_default":
         lambda train_loader_fn, test_loader_fn, model:
         experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
-                                            get_default_keep_pct_readout_args(weighted=True, alpha=1)),
+                                            get_default_keep_pct_readout_args(weighted=True, alpha=1, val=True)),
+    "keep_pct_readout_shape_only_9_class":
+        lambda train_loader_fn, test_loader_fn, model:
+        experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
+                                            get_9_class_keep_pct_readout_args(weighted=True, alpha=1, val=True)),
     "keep_pct_readout_color_only":
         lambda train_loader_fn, test_loader_fn, model:
         experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
-                                            get_default_keep_pct_readout_args(weighted=True, alpha=0)),
+                                            get_default_keep_pct_readout_args(weighted=True, alpha=0, val=True)),
     "keep_pct_readout_location_only":
         lambda train_loader_fn, test_loader_fn, model:
         experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
-                                            get_9_class_keep_pct_readout_args(weighted=True, alpha=0)),
+                                            get_9_class_keep_pct_readout_args(weighted=True, alpha=0, val=True)),
 }
 
 
-for i in range(101):
+for i in range(1001):
     alpha = i / 100.
     options["keep_pct_readout_default_" + str(i)] = lambda train_loader_fn, test_loader_fn, model, alpha=alpha: \
         experiments.keep_pct_readout.run(train_loader_fn,
@@ -307,3 +341,39 @@ for i in range(101):
                                             test_loader_fn,
                                             model,
                                             get_3_class_keep_pct_readout_args(alpha=alpha))
+
+    options["keep_pct_readout_shape_only_default_" + str(i)] = \
+        lambda train_loader_fn, test_loader_fn, model, alpha=alpha: \
+        experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
+                                            get_default_keep_pct_readout_args(weighted=True, alpha=1, val=True, lr=alpha / 100.))
+
+    options["keep_pct_readout_shape_only_9_class_" + str(i)] = \
+        lambda train_loader_fn, test_loader_fn, model, alpha=alpha: \
+        experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
+                                            get_9_class_keep_pct_readout_args(weighted=True, alpha=1, val=True, lr=alpha / 100.))
+
+    options["keep_pct_readout_color_only_" + str(i)] = \
+        lambda train_loader_fn, test_loader_fn, model, alpha=alpha: \
+        experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
+                                            get_default_keep_pct_readout_args(weighted=True, alpha=0, val=True, lr=alpha / 100.))
+
+    options["keep_pct_readout_location_only_" + str(i)] = \
+        lambda train_loader_fn, test_loader_fn, model, alpha=alpha: \
+        experiments.keep_pct_readout_v2.run(train_loader_fn, test_loader_fn, model,
+                                            get_9_class_keep_pct_readout_args(weighted=True, alpha=0, val=True, lr=alpha / 100.))
+
+    options["keep_pct_readout_default_v2_lr_" + str(i)] = \
+        lambda train_loader_fn, test_loader_fn, model, alpha=alpha: \
+        experiments.keep_pct_readout_v2.run(train_loader_fn,
+                                            test_loader_fn,
+                                            model,
+                                            get_default_keep_pct_readout_args(lr=alpha / 100.))
+
+    options["keep_pct_readout_9_class_v2_lr_" + str(i)] = \
+        lambda train_loader_fn, test_loader_fn, model, alpha=alpha: \
+        experiments.keep_pct_readout_v2.run(train_loader_fn,
+                                            test_loader_fn,
+                                            model,
+                                            get_9_class_keep_pct_readout_args(lr=alpha / 100.))
+
+

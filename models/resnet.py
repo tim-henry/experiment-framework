@@ -57,7 +57,7 @@ class Bottleneck(nn.Module):
             )
 
     def forward(self, x):
-        x.requires_grad = True
+        # x.requires_grad = True
         out = F.relu(self.bn1(self.conv1(x)))
         out = F.relu(self.bn2(self.conv2(out)))
         out = self.bn3(self.conv3(out))
@@ -67,24 +67,26 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, fine_tune=False, classes=(10, 10), pool=True, pretrained=False, size_factor=1):
-        print(size_factor)
+    def __init__(self, block, num_blocks, fine_tune=False, classes=(10, 10), pool=True, pretrained=False, in_planes=64, size_factor=1):
+        print("In Planes", in_planes)
         # print("Fine tune? ", fine_tune)
         super(ResNet, self).__init__()
-        self.in_planes = 64
+        self.in_planes = in_planes
         self.pool = pool
         self.classes = classes
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
+        self.conv1 = nn.Conv2d(3, self.in_planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(self.in_planes)
+        self.layer1 = self._make_layer(block, self.in_planes, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.pool_fc = nn.Linear(8192, 512*block.expansion)
-        self.fc2_number = nn.Linear(512*block.expansion, classes[0])
-        self.fc2_color = nn.Linear(512*block.expansion, classes[1])
-        if len(classes) == 3:
-            self.fc2_loc = nn.Linear(512*block.expansion, classes[2])
+        self.pool_fc = nn.Linear(8192, 512 * block.expansion)
+        self.fc2_number = nn.Linear(512 * block.expansion, classes[0])
+        self.fc2_color = nn.Linear(512 * block.expansion, classes[1])
+        if len(classes) >= 3:
+            self.fc2_loc = nn.Linear(512 * block.expansion, classes[2])
+        if len(classes) == 4:
+            self.fc2_scale = nn.Linear(512 * block.expansion, classes[3])
 
         if pool:
             if not pretrained:
@@ -120,31 +122,50 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        # print("1", x.shape)
         out = F.relu(self.bn1(self.conv1(x)))
+        # print("2", out.shape)
         out = self.layer1(out)
+        # print("3", out.shape)
         out = self.layer2(out)
+        # print("4", out.shape)
         out = self.layer3(out)
+        # print("5", out.shape)
         out = self.layer4(out)
+        # print("6", out.shape)
         if self.pool:
-            out = F.avg_pool2d(out, 4)
+            if len(self.classes) == 4:
+                out = F.avg_pool2d(out, 12)
+            else:
+                out = F.avg_pool2d(out, 4)
+            out = F.relu(out)   # todo simplify code
         else:
             out = out.view(out.size(0), -1)
             out = self.pool_fc(out)
             out = F.relu(out)
+        # print("7", out.shape)
         out = out.view(out.size(0), -1)
+        # print("8", out.shape)
         # out = self.linear(out)
+
         num = self.fc2_number(out)
         col = self.fc2_color(out)
-        if len(self.classes) == 3:
+        if len(self.classes) == 4:
+            loc = self.fc2_loc(out)
+            scale = self.fc2_scale(out)
+            return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1), F.log_softmax(loc, dim=1), F.log_softmax(scale, dim=1)
+
+        elif len(self.classes) == 3:
             loc = self.fc2_loc(out)
             return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1), F.log_softmax(loc, dim=1)
+
         else:
             return F.log_softmax(num, dim=1), F.log_softmax(col, dim=1)
 
 
-def ResNet18(pretrained=False, fine_tune=False, classes=(10, 10), pool=True):
+def ResNet18(pretrained=False, fine_tune=False, classes=(10, 10), in_planes=64, pool=True):
     # print("Pretrained? ", pretrained)
-    model = ResNet(BasicBlock, [2, 2, 2, 2], fine_tune=fine_tune, classes=classes, pool=pool, pretrained=pretrained)
+    model = ResNet(BasicBlock, [2, 2, 2, 2], fine_tune=fine_tune, classes=classes, in_planes=in_planes, pool=pool, pretrained=pretrained)
 
     if not pretrained:
         return model
@@ -165,6 +186,15 @@ def ResNet18(pretrained=False, fine_tune=False, classes=(10, 10), pool=True):
     model_dict.update(new_state_dict)
     # load the new state dict
     model.load_state_dict(model_dict)
+    return model
+
+
+def ResNet50(pretrained=False, fine_tune=False, classes=(10, 10), pool=True):
+    if pretrained:
+        raise Exception("Pretrained weights not yet available for ResNet-50")
+
+    model = ResNet(Bottleneck, [3, 4, 6, 3], fine_tune=fine_tune, classes=classes, pool=pool, pretrained=pretrained)
+
     return model
 
 

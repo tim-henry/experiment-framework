@@ -1,6 +1,7 @@
 import datasets.colored_dataset
 import datasets.varied_location_dataset
 import datasets.colored_location_dataset
+import datasets.col_loc_scale_dataset
 import datasets.big_location_dataset
 import datasets.generic_dataset
 import datasets.scale_dataset
@@ -91,6 +92,27 @@ def left_out_many_scale_mnist_test_loader(args):
         batch_size=args['test_batch_size'], shuffle=True, **get_kwargs(args['use_cuda']))
 
 
+def left_out_many_scale_biased_mnist_train_loader(args):
+    dataset = datasets.many_scale_dataset.LeftOutManyScaleMNIST('../data/', train=True, download=False,
+                                                     pct_to_keep=args['keep_pct'], color_indices=np.arange(9))
+    indices = list(range(len(dataset)))
+    split = int(np.floor(args['example_pct'] * len(dataset)))
+    np.random.shuffle(indices)
+
+    return utils.DataLoader(
+            dataset,
+            batch_size=args['batch_size'], sampler=utils.sampler.SubsetRandomSampler(indices[:split]),
+            **get_kwargs(args['use_cuda']))
+
+
+def left_out_many_scale_biased_mnist_test_loader(args):
+    dataset = datasets.many_scale_dataset.LeftOutManyScaleMNIST(
+        '../data/', train=False, download=False, pct_to_keep=1, color_indices=np.arange(9))
+    return utils.DataLoader(
+        dataset,
+        batch_size=args['test_batch_size'], shuffle=True, **get_kwargs(args['use_cuda']))
+
+
 def left_out_colored_loc_mnist_train_loader(args):
     dataset = datasets.generic_dataset.LeftOutColoredLocationMNIST('../data/synth', train=True,
                                                                    keep_num=args['keep_pct'])
@@ -109,6 +131,47 @@ def left_out_colored_loc_mnist_test_loader(args):
         datasets.generic_dataset.LeftOutColoredLocationMNIST('../data/synth', train=False),
         batch_size=args['test_batch_size'], shuffle=True, **get_kwargs(args['use_cuda']))
 
+
+# def left_out_colored_loc_mnist_train_loader(args):
+#     return utils.DataLoader(
+#         datasets.colored_location_dataset.LeftOutColoredLocationMNIST('../data/', train=True, download=False, pct_to_keep=args['keep_pct']),
+#         batch_size=args['batch_size'], shuffle=True, **get_kwargs(args['use_cuda']))
+#
+#
+# def left_out_colored_loc_mnist_test_loader(args):
+#     return utils.DataLoader(
+#         datasets.colored_location_dataset.LeftOutColoredLocationMNIST('../data/', train=False, download=False, pct_to_keep=9),
+#         batch_size=args['batch_size'], shuffle=True, **get_kwargs(args['use_cuda']))
+
+
+def col_loc_scale_mnist_train_loader(args):
+    return utils.DataLoader(
+        datasets.col_loc_scale_dataset.ColLocScaleMNIST('../data/', train=True, download=False, pct_to_keep=args['keep_pct']),
+        batch_size=args['batch_size'], shuffle=True, **get_kwargs(args['use_cuda']))
+
+
+def col_loc_scale_mnist_test_loader(args):
+    return utils.DataLoader(
+        datasets.col_loc_scale_dataset.ColLocScaleMNIST('../data/', train=False, download=False, pct_to_keep=9),
+        batch_size=args['batch_size'], shuffle=True, **get_kwargs(args['use_cuda']))
+
+
+# def col_loc_scale_mnist_train_loader(args):
+#     dataset = datasets.generic_dataset.ColLocScaleMNIST('../data/synth', train=True, keep_num=args['keep_pct'])
+#     indices = list(range(len(dataset)))
+#     split = int(np.floor(args['example_pct'] * len(dataset)))
+#     np.random.shuffle(indices)
+#
+#     return utils.DataLoader(
+#             dataset,
+#             batch_size=args['batch_size'], sampler=utils.sampler.SubsetRandomSampler(indices[:split]),
+#             **get_kwargs(args['use_cuda']))
+#
+#
+# def col_loc_scale_mnist_test_loader(args):
+#     return utils.DataLoader(
+#         datasets.generic_dataset.ColLocScaleMNIST('../data/synth', train=False),
+#         batch_size=args['test_batch_size'], shuffle=True, **get_kwargs(args['use_cuda']))
 
 # TODO move
 def left_out_big_location_mnist_train_loader(args):
@@ -148,7 +211,11 @@ options = {
                              left_out_scale_mnist_test_loader),
     "left_out_many_scale_mnist": (left_out_many_scale_mnist_train_loader,
                                   left_out_many_scale_mnist_test_loader),
+    "left_out_many_scale_biased_mnist": (left_out_many_scale_biased_mnist_train_loader,
+                                  left_out_many_scale_biased_mnist_test_loader),
     "cifar10": (cifar10_train_loader, cifar10_test_loader),
     "left_out_big_location_mnist": (left_out_big_location_mnist_train_loader,
                                     left_out_big_location_mnist_test_loader),
+    "col_loc_scale_mnist": (col_loc_scale_mnist_train_loader,
+                            col_loc_scale_mnist_test_loader),
 }

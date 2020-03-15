@@ -8,9 +8,15 @@ from torchvision import datasets, transforms
 class LeftOutColoredMNIST(datasets.MNIST):
     # Color classes
     color_name_map = ["red", "green", "blue", "yellow", "magenta", "cyan", "purple", "lime", "orange", "white"]
-    color_map = [np.array([1, 0.1, 0.1]), np.array([0.1, 1, 0.1]), np.array([0.1, 0.1, 1]),
-                 np.array([1, 1, 0.1]), np.array([1, 0.1, 1]), np.array([0.1, 1, 1]),
-                 np.array([0.57, 0.12, 0.71]), np.array([0.72, 0.96, 0.24]), np.array([0.96, 0.51, 0.19]),
+    color_map = [np.array([1, 0.1, 0.1]),
+                 np.array([0.1, 1, 0.1]),
+                 np.array([0.1, 0.1, 1]),
+                 np.array([1, 1, 0.1]),
+                 np.array([1, 0.1, 1]),
+                 np.array([0.1, 1, 1]),
+                 np.array([0.57, 0.12, 0.71]),
+                 np.array([0.72, 0.96, 0.24]),
+                 np.array([0.96, 0.51, 0.19]),
                  np.array([1, 1, 1])]
 
     # Gaussian noise arguments
